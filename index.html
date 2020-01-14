@@ -1,0 +1,53 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <link rel='stylesheet' type='text/css' href='style.css'>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <meta charset="utf-8">
+
+  <title>The HTML5 Herald</title>
+
+</head>
+
+<body>
+
+    <input placeholder="force" id="force">
+    <input placeholder="angle" id="angle">
+
+    <div>
+        <canvas id="canvas"></canvas>
+    <button id="start" onclick="start()">start simulation</button>
+    </div>
+
+
+
+
+    <div>flight duration:</div>
+    <div id="duration"></div>
+    <div>velocity:</div>
+    <div id="vel"></div>
+    <div>angle:</div>
+    <div id="ang"></div>
+
+
+            <table>
+                <thead>
+                    <tr>
+                        <td>tick</td>
+                        <td>x</td>
+                        <td>y</td>
+                    </tr>
+                </thead>
+
+                <tbody id="tbody">
+
+                </tbody>
+            </table>
+
+
+
+
+  <script src="script.js"></script>
+</body>
+</html>
