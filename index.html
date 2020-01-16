@@ -17,11 +17,8 @@
 
     <div>
         <canvas id="canvas"></canvas>
-    <button id="start" onclick="start()">start simulation</button>
+    <button id="start" onclick="manager()">start simulation</button>
     </div>
-
-
-
 
     <div>flight duration:</div>
     <div id="duration"></div>
@@ -29,21 +26,34 @@
     <div id="vel"></div>
     <div>angle:</div>
     <div id="ang"></div>
+    <div>start height:</div>
+    <div id="height"></div>
 
+    <table>
+        <thead>
+            <tr>
+                <td>tick</td>
+                <td>x</td>
+                <td>y</td>
+            </tr>
+        </thead>
 
-            <table>
-                <thead>
-                    <tr>
-                        <td>tick</td>
-                        <td>x</td>
-                        <td>y</td>
-                    </tr>
-                </thead>
+        <tbody id="tbody">
 
-                <tbody id="tbody">
+        </tbody>
+    </table>
 
-                </tbody>
-            </table>
+    <div id="advanced-settings">
+        <input placeholder="line_thic" id="line_thic">
+        <input placeholder="scale" id="scale">
+        <input placeholder="delay" id="delay">
+        <input placeholder="bg_color" id="bg_color">
+        <input placeholder="draw_angle_line" id="draw_angle_line">
+        <input placeholder="angle_line_thicc" id="angle_line_thicc">
+        <input placeholder="angle_line_x" id="angle_line_x">
+        <input placeholder="instant_animation" id="instant_animation">
+        <input placeholder="anim_interval_frame" id="anim_interval_frame">
+    </div>
 
 
 
