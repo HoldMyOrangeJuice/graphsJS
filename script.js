@@ -1,24 +1,25 @@
-// SYSTEM VARIABLES //
+//   VARIABLES   //
 let use_rad = false
 let tick_step = 0.1
 let line_thic = 3
 let scale = 0.5
 let delay = 1
 let bg_color = 'white'
-let draw_angle_line = true
+let draw_angle_line = false
 let angle_line_thicc = 2
 let angle_line_x = 100
-let instant_animation = true
+let instant_animation = false
 let anim_interval_frame = 200
 auto_scale = true
-//                  //
+let g = 9.81
+//               //
 
 
 class simulation_field
 {
     constructor(height, width, start_x, start_y)
     {
-        this.start_point = new Point(start_x, height-start_y)
+        this.start_point = new Point(start_x, start_y)
         let canvas;
         this.width = width
         this.height = height
@@ -62,15 +63,16 @@ class physic_object
 
     get_x(tick){
         console.log("scale in use", scale)
-        return this.field.start_point.x + ((this.force * tick * Math.cos(this.angle))) * scale
+        return ((this.force * tick * Math.cos(this.angle)))
     }
-    get_y(tick){return this.field.start_point.y - (((this.force * Math.sin(this.angle)) - (9.81* tick)) * tick) * scale}
+        get_y(tick){ return (((this.force * Math.sin(this.angle)) - (9.81* tick)) * tick)}
 
     in_air()
     {
         console.log("current y:", this.cur_coords.y, "bord:", this.field.height)
-        if (this.cur_coords.y > this.field.height)
+        if (this.cur_coords.y < 0) //this.field.height
         {
+            console.log("done")
            this.done = true;
            return false;
         }
@@ -87,14 +89,16 @@ class physic_object
     {
         let color = this.determine_color(pointprev.distance(pointcur))
 
-        console.log("max dist:", this.max_distance);
-        console.log("min dist:", this.min_distance);
         let ctx = this.field.canvas
+        let start_x = this.field.start_point.x
+        let start_y = this.field.start_point.y
+        let field_height = this.field.height
         ctx.strokeStyle = color
         ctx.lineWidth = line_thic;
         ctx.beginPath();
-        ctx.moveTo(pointprev.x, pointprev.y);
-        ctx.lineTo(pointcur.x, pointcur.y);
+
+        ctx.moveTo(start_x + (pointprev.x * scale), (field_height-(field_height - ((field_height - pointprev.y)-start_y)) * scale ) );
+        ctx.lineTo(start_x + (pointcur.x *scale), (field_height-(field_height - ((field_height - pointcur.y ) - start_y)) * scale ) );
         ctx.stroke();
 
         if (draw_angle_line)
@@ -115,9 +119,6 @@ class physic_object
         let blue = 255 * from_left / diff
         let red =  255 * from_right / diff
 
-        console.log("red:", red)
-        console.log("blue:", blue)
-
         let green = 100;
         return `rgb(${red},${green}, ${blue})`;
     }
@@ -127,42 +128,44 @@ class physic_object
         let y__ = this.field.start_point.y
         let speed = this.force
         let angle = this.angle
-        let g = 9.81
         // return (speed*Math.sin(angle) - this.field.height)/9.81
-        let time1 = (-speed*Math.sin(angle)*scale + Math.sqrt(Math.pow(speed * Math.sin(angle)*scale, 2) + 4 * g * y__*scale)) / (-2 * g*scale)
-        let time2 = (-speed*Math.sin(angle) * scale - Math.sqrt(Math.pow(speed * Math.sin(angle)*scale, 2) + 4 * g * y__*scale)) / (-2 * g*scale)
-        console.log(y__ )
+        // let time1 = (-speed*Math.sin(angle) + Math.sqrt(Math.pow(speed * Math.sin(angle), 2) + 4 * g * y__)) / (-2 * g )
+        // let time2 = (-speed*Math.sin(angle) - Math.sqrt(Math.pow(speed * Math.sin(angle), 2) + 4 * g * y__)) / (-2 * g )
+        let time1 = (speed*Math.sin(angle) + Math.sqrt(Math.pow(-speed * Math.sin(angle), 2) + 4 * g * y__)) / (2 * g )
+        let time2 = (speed*Math.sin(angle) - Math.sqrt(Math.pow(-speed * Math.sin(angle), 2) + 4 * g * y__)) / (2 * g )
         return Math.max(time1, time2)
     }
 
     auto_scale()
     {
-        console.log("auoscele")
         let finish_tick = this.predict_livetime()
         scale = 1
-        let graph_width = this.get_x(finish_tick)
+        let graph_width =  this.field.start_point.x +this.get_x(finish_tick)
         let field_width = this.field.width
 
-        scale = (  field_width/ graph_width )
+        scale = (field_width / graph_width)
+        console.log("field_width", field_width, "\ngraph_width", graph_width)
 
     }
 
     start()
     {
-        let duration_elem = $("#duration")
-        let vel_elem = $("#vel")
-        let angle_elem = $("#ang")
-        let height_elem = $("#height")
+        let duration_elem = $("#duration");
+        let vel_elem = $("#vel");
+        let angle_elem = $("#ang");
+        let height_elem = $("#height");
+        let width_elem = $("#width");
 
         duration_elem.text(this.predict_livetime())
         vel_elem.text(this.force)
         angle_elem.text(this.angle)
-        height_elem.text(this.field.height)
+        height_elem.text(this.field.start_point.y)
+        width_elem.text(this.field.start_point.x)
 
         let instance = this
         let tick = 0
-        let pointprev = this.field.start_point
-        let pointcurr = null
+        let pointprev = null
+        let pointcurr = new Point(0, 0)
 
         let tbody = $("#tbody")
         tbody.empty()
@@ -172,22 +175,22 @@ class physic_object
                 let x = instance.get_x(tick)
                 let y = instance.get_y(tick)
 
-                console.log("\ntick: ", tick, "\n\nx: ", x, " \ny: ", y)
 
-                if (tick > 100000) clearInterval(interval)
+                console.log("\ntick: ", tick, "\n\nx: ", x, " \nget_y: ", y)
+
+                if (tick > 10000) clearInterval(interval)
+
                 if (pointcurr)
                 pointprev = pointcurr
 
                 pointcurr = new Point(x, y)
                 instance.cur_coords = pointcurr
-                console.log("distance betw 2 points:", pointprev.distance(pointcurr))
                 if (instance.max_distance < pointprev.distance(pointcurr))
                 {
                     instance.max_distance = pointprev.distance(pointcurr)
                 }
                 if (instance.min_distance > pointprev.distance(pointcurr) && pointprev.distance(pointcurr)!= 0)
                 {
-                    console.log("change min dist:", pointprev, pointcurr)
                     instance.min_distance = pointprev.distance(pointcurr)
                 }
 
@@ -207,14 +210,12 @@ class physic_object
 }
 
 function create_instance(force_, angle_) {
-    let field = new simulation_field(1000, 1500, 600, 500)
+    let field = new simulation_field(1000, 1500, 0, 500)
 
     // converted degrees to rads already
 
     let obj = new physic_object(force_, angle_, field.start_point.x, field.start_point.y, field)
-    console.log(obj)
     if (auto_scale) obj.auto_scale()
-    console.log(scale, "scale")
     obj.start()
     return obj
 }
@@ -276,7 +277,6 @@ function call_in_loop(angle_range) {
                     // all objects done
                     clearInterval(iii)
                 }
-                console.log("idx------:", idx)
 
                 if (!use_rad)
                 {
