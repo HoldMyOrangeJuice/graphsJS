@@ -19,24 +19,33 @@
         <canvas id="canvas"></canvas>
     <button id="start" onclick="manager()">start simulation</button>
     </div>
-
-    <div>flight duration:</div>
+    <h3>predictions:</h3>
+    <div>flight duration (s):</div>
     <div id="duration"></div>
-    <div>velocity:</div>
+
+    <div>distance (m/s):</div>
+    <div id="dist"></div>
+
+    <h3>parameters:</h3>
+
+    <div>velocity (m/s):</div>
     <div id="vel"></div>
-    <div>angle:</div>
+
+    <div>angle (rad):</div>
     <div id="ang"></div>
-    <div>start height:</div>
+
+    <div>start height (m):</div>
     <div id="height"></div>
-    <div>start width:</div>
+
+    <div>start distance (m):</div>
     <div id="width"></div>
 
     <table>
         <thead>
             <tr>
-                <td>tick</td>
-                <td>x</td>
-                <td>y</td>
+                <td>second</td>
+                <td>x (m)</td>
+                <td>y (m)</td>
             </tr>
         </thead>
 

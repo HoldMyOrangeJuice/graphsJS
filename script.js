@@ -1,17 +1,31 @@
+// too lazy to take all values from <inputs> //
+INIT_FIELD_HEIGHT = 1000
+INIT_FIELD_WIDTH = 1500
+INIT_OBJ_OFFSET_X = 100
+INIT_OBJ_OFFSET_Y = 100
+// //
+
 //   VARIABLES   //
-let use_rad = false
-let tick_step = 0.1
-let line_thic = 3
-let scale = 0.5
-let delay = 1
-let bg_color = 'white'
-let draw_angle_line = false
+
+let anim_interval_frame = 200
 let angle_line_thicc = 2
 let angle_line_x = 100
-let instant_animation = false
-let anim_interval_frame = 200
-auto_scale = true
+let bg_color = 'white'
+let scale_line_x = 10
+let tick_step = 0.03
+let line_thic = 3
+let scale = 1
+let delay = 1
 let g = 9.81
+let precision = 3
+
+let instant_animation = false
+let draw_graph_as_line = true
+let draw_angle_line = false // kinda broken
+let draw_time_scale = true
+let output_table = true
+let auto_scale = true
+let use_rad = false
 //               //
 
 
@@ -70,7 +84,7 @@ class physic_object
     in_air()
     {
         console.log("current y:", this.cur_coords.y, "bord:", this.field.height)
-        if (this.cur_coords.y < 0) //this.field.height
+        if (this.cur_coords.y < -this.field.start_point.y ) //this.field.height
         {
             console.log("done")
            this.done = true;
@@ -97,16 +111,36 @@ class physic_object
         ctx.lineWidth = line_thic;
         ctx.beginPath();
 
-        ctx.moveTo(start_x + (pointprev.x * scale), (field_height-(field_height - ((field_height - pointprev.y)-start_y)) * scale ) );
-        ctx.lineTo(start_x + (pointcur.x *scale), (field_height-(field_height - ((field_height - pointcur.y ) - start_y)) * scale ) );
-        ctx.stroke();
+        console.log(
+            "\nfrom\n",
+            `(${field_height}-(${field_height} - ((${field_height} - ${pointprev.y})-${start_y})) * ${scale} ) =`,
+            (field_height-(field_height - ((field_height - pointprev.y)-start_y)) * scale ),
+            "\nto\n",
+            `(${field_height}-(${field_height} - ((${field_height} - ${pointcur.y})-${start_y})) * ${scale} ) =`,
+            (field_height-(field_height - ((field_height - pointcur.y)-start_y)) * scale )
+        )
+        if (draw_graph_as_line)
+        {
+            ctx.moveTo(start_x * scale + (pointprev.x * scale), (field_height - (field_height - ((field_height - pointprev.y) - start_y)) * scale));
+            ctx.lineTo(start_x * scale + (pointcur.x * scale), (field_height - (field_height - ((field_height - pointcur.y) - start_y)) * scale));
+            ctx.stroke();
+        }
+
+        if (draw_time_scale)
+        {
+            ctx.lineWidth = angle_line_thicc
+            ctx.beginPath();
+            ctx.moveTo(start_x*scale + (pointprev.x * scale), (field_height-(field_height - ((field_height - pointprev.y)-start_y)) * scale ));
+            ctx.lineTo(start_x*scale + (pointcur.x *scale) + scale_line_x, (field_height-(field_height - ((field_height - pointcur.y ) - start_y)) * scale )- scale_line_x * Math.tan(this.angle));
+            ctx.stroke();
+        }
 
         if (draw_angle_line)
         {
             ctx.lineWidth = angle_line_thicc
             ctx.beginPath();
-            ctx.moveTo(this.field.start_point.x, this.field.start_point.y);
-            ctx.lineTo(this.field.start_point.x + angle_line_x, this.field.start_point.y - angle_line_x * Math.tan(this.angle));
+            ctx.moveTo( (start_x)*scale, field_height-start_y*scale );
+            ctx.lineTo(start_x*scale + angle_line_x, field_height-((angle_line_x * Math.tan(angle))) );
             ctx.stroke();
         }
     }
@@ -141,9 +175,10 @@ class physic_object
         let finish_tick = this.predict_livetime()
         scale = 1
         let graph_width =  this.field.start_point.x +this.get_x(finish_tick)
+        console.log(`${this.field.start_point.x} +${this.get_x(finish_tick)}=`, this.field.start_point.x +this.get_x(finish_tick))
         let field_width = this.field.width
 
-        scale = (field_width / graph_width)
+        scale = ( (field_width-this.field.start_point.x) / graph_width)
         console.log("field_width", field_width, "\ngraph_width", graph_width)
 
     }
@@ -155,12 +190,14 @@ class physic_object
         let angle_elem = $("#ang");
         let height_elem = $("#height");
         let width_elem = $("#width");
+        let dist_elem = $("#dist");
 
-        duration_elem.text(this.predict_livetime())
+        duration_elem.text( round(this.predict_livetime(), precision) )
         vel_elem.text(this.force)
-        angle_elem.text(this.angle)
+        angle_elem.text(round(this.angle, precision))
         height_elem.text(this.field.start_point.y)
         width_elem.text(this.field.start_point.x)
+        dist_elem.text(round(this.get_x(this.predict_livetime()), precision))
 
         let instance = this
         let tick = 0
@@ -201,8 +238,8 @@ class physic_object
 
                 }
                 if ( !instance.in_air() ) clearInterval(interval)
+                if (output_table) tbody.append(`<tr><td>${ round(tick, precision) }</td><td>${round(instance.cur_coords.x, precision)}</td><td>${round(instance.cur_coords.y, precision)}</td></tr>`)
 
-                tbody.append(`<tr><td>${Math.round(tick )}</td><td>${instance.cur_coords.x}</td><td>${instance.cur_coords.y}</td></tr>`)
                 tick += instant_animation ? 1 : tick_step
 
             },instant_animation ? 0 : delay)
@@ -210,7 +247,8 @@ class physic_object
 }
 
 function create_instance(force_, angle_) {
-    let field = new simulation_field(1000, 1500, 0, 500)
+
+    let field = new simulation_field(INIT_FIELD_HEIGHT, INIT_FIELD_WIDTH, INIT_OBJ_OFFSET_X, INIT_OBJ_OFFSET_Y)
 
     // converted degrees to rads already
 
@@ -250,7 +288,7 @@ function manager()
 
 
 function validate_force(force) {
-    return parseInt(force)
+    return Math.abs(parseInt(force) )
 
 }
 
@@ -300,6 +338,12 @@ function validate_int(s)
 function validate_bool(s)
 {
     return s == "true"
+}
+
+
+function round(float, decimal_places)
+{
+    return Math.round(float * (Math.pow(10,decimal_places)) )/Math.pow(10, decimal_places)
 }
 
 
