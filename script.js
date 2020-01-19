@@ -1,12 +1,12 @@
 // too lazy to take all values from <inputs> //
 INIT_FIELD_HEIGHT = 1000
 INIT_FIELD_WIDTH = 1500
-INIT_OBJ_OFFSET_X = 100
-INIT_OBJ_OFFSET_Y = 100
-// //
+INIT_OBJ_OFFSET_X = 100 // can be negative
+INIT_OBJ_OFFSET_Y = 100 // can't be negative
+
 
 //   VARIABLES   //
-
+let instant_tick_step = 0.5
 let anim_interval_frame = 200
 let angle_line_thicc = 2
 let angle_line_x = 100
@@ -27,6 +27,9 @@ let output_table = true
 let auto_scale = true
 let use_rad = false
 //               //
+
+
+draw_time_scale = instant_animation? false: draw_time_scale
 
 
 class simulation_field
@@ -70,23 +73,23 @@ class physic_object
         this.tick = 0;
         this.field = _field;
         this.cur_coords = new Point(start_x, start_y);
-        this.max_distance = 0
-        this.min_distance = 100
+        this.max_distance = 0//this.get_biggest_dist()
+        this.min_distance = 100//this.get_smallest_dist()
         this.done = false
     }
 
     get_x(tick){
-        console.log("scale in use", scale)
+
         return ((this.force * tick * Math.cos(this.angle)))
     }
         get_y(tick){ return (((this.force * Math.sin(this.angle)) - (9.81* tick)) * tick)}
 
     in_air()
     {
-        console.log("current y:", this.cur_coords.y, "bord:", this.field.height)
+
         if (this.cur_coords.y < -this.field.start_point.y ) //this.field.height
         {
-            console.log("done")
+            console.log(this,"\n\n\n\n\n\n\n\n DONE \n\n\n\n\n\n\n\n")
            this.done = true;
            return false;
         }
@@ -111,14 +114,7 @@ class physic_object
         ctx.lineWidth = line_thic;
         ctx.beginPath();
 
-        console.log(
-            "\nfrom\n",
-            `(${field_height}-(${field_height} - ((${field_height} - ${pointprev.y})-${start_y})) * ${scale} ) =`,
-            (field_height-(field_height - ((field_height - pointprev.y)-start_y)) * scale ),
-            "\nto\n",
-            `(${field_height}-(${field_height} - ((${field_height} - ${pointcur.y})-${start_y})) * ${scale} ) =`,
-            (field_height-(field_height - ((field_height - pointcur.y)-start_y)) * scale )
-        )
+
         if (draw_graph_as_line)
         {
             ctx.moveTo(start_x * scale + (pointprev.x * scale), (field_height - (field_height - ((field_height - pointprev.y) - start_y)) * scale));
@@ -147,12 +143,15 @@ class physic_object
 
     determine_color(distance)
     {
-        let diff = this.max_distance - this.min_distance
-        let from_left = Math.abs(distance - this.min_distance)
-        let from_right = Math.abs(this.max_distance - distance)
-        let blue = 255 * from_left / diff
-        let red =  255 * from_right / diff
-
+        let diff = ((this.max_distance) - (this.min_distance)) * 100
+        console.log("\nmax:", this.max_distance, "\nmin:",this.min_distance)
+        let from_left = Math.abs(distance - this.min_distance) * 100
+        let from_right = Math.abs(this.max_distance - distance) * 100
+        let point = diff / 255
+        console.log("point (1/255) is", point, "diff is", diff, "red dist", from_right, "blue dist", from_left)
+        let blue = point * from_left
+        let red =  point * from_right
+        console.log("red:", red, "\nblue:", blue)
         let green = 100;
         return `rgb(${red},${green}, ${blue})`;
     }
@@ -170,16 +169,33 @@ class physic_object
         return Math.max(time1, time2)
     }
 
+
+    get_biggest_dist()
+{
+    let t0p = new Point(this.get_x(0), this.get_y(0))
+    let t1p = new Point(this.get_x(tick_step), this.get_y(tick_step))
+    return t0p.distance(t1p)
+}
+
+get_smallest_dist() {
+    let start_x = this.field.start_point.x
+    let speed = this.force
+    let angle = this.angle
+    let half_period = start_x/speed*Math.cos(angle)
+    let mid_time = half_period/2
+    let sp1 = new Point(this.get_x(mid_time), this.get_y(mid_time))
+    let sp2 = new Point(this.get_x(mid_time+tick_step), this.get_y(mid_time+tick_step))
+    return sp1.distance(sp2)
+}
+
     auto_scale()
     {
         let finish_tick = this.predict_livetime()
         scale = 1
         let graph_width =  this.field.start_point.x +this.get_x(finish_tick)
-        console.log(`${this.field.start_point.x} +${this.get_x(finish_tick)}=`, this.field.start_point.x +this.get_x(finish_tick))
         let field_width = this.field.width
 
         scale = ( (field_width-this.field.start_point.x) / graph_width)
-        console.log("field_width", field_width, "\ngraph_width", graph_width)
 
     }
 
@@ -240,7 +256,7 @@ class physic_object
                 if ( !instance.in_air() ) clearInterval(interval)
                 if (output_table) tbody.append(`<tr><td>${ round(tick, precision) }</td><td>${round(instance.cur_coords.x, precision)}</td><td>${round(instance.cur_coords.y, precision)}</td></tr>`)
 
-                tick += instant_animation ? 1 : tick_step
+                tick += instant_animation ? instant_tick_step : tick_step
 
             },instant_animation ? 0 : delay)
     }
@@ -306,28 +322,32 @@ function call_in_loop(angle_range) {
 
             let iii = setInterval(function ()
             {
-                if (idx < parseInt(angle_range[1]) && obj_instance && obj_instance.done)
+                console.log(obj_instance)
+                if (idx < parseInt(angle_range[1]) && ( (obj_instance && obj_instance.done)  ||  (!obj_instance) )  )
                 {
                     idx += parseInt(angle_step)
-                }
 
-                else if (obj_instance){
-                    // all objects done
+                    if (!use_rad)
+                    {
+                        angle = rad_to_deg(idx)
+                        obj_instance = create_instance(force, angle)
+                    }
+                    else
+                    {
+                        angle = idx
+                        obj_instance = create_instance(force, angle)
+                    }
+                    }
+
+                else if (obj_instance.done){
+                    console.log("all done")
                     clearInterval(iii)
                 }
+                else console.log("not done yet. skipping...\n")
 
-                if (!use_rad)
-                {
-                    angle = rad_to_deg(idx)
-                    obj_instance = create_instance(force, angle)
-                }
-                else
-                {
-                    angle = idx
-                    obj_instance = create_instance(force, angle)
-                }
 
-            }, instant_animation ? anim_interval_frame : 1000)
+
+            }, 100)
         }
 
 
@@ -345,6 +365,10 @@ function round(float, decimal_places)
 {
     return Math.round(float * (Math.pow(10,decimal_places)) )/Math.pow(10, decimal_places)
 }
+
+
+
+
 
 
 
