@@ -6,65 +6,169 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <meta charset="utf-8">
 
-  <title>The HTML5 Herald</title>
+  <title>physics</title>
 
 </head>
 
 <body>
 
-    <input placeholder="force" id="force">
-    <input placeholder="angle" id="angle">
+<script>
+    function toggle_table()
+    {
+        let table = document.getElementById("table");
+        table.hidden = !table.hidden;
+    }
+
+    function toggle_adv()
+    {
+        let elem = document.getElementById("advanced-settings");
+        if (elem.style.display == "flex")
+        {
+            elem.style.display = "none"
+        }
+        else
+        {
+                elem.style.display = "flex"
+        }
+
+    }
+
+</script>
+
+	<div class="inputs">
+		<input class="head-input" placeholder="force" id="force">
+		<input class="head-input" placeholder="angle" id="angle">
+        <button id="start" onclick="manager()">start simulation</button>
+		<input class="head-input" placeholder="x offset" id="x-off">
+		<input class="head-input" placeholder="y offset" id="y-off">
+	</div>
+    
+	
+	<div class="main-container flex">
+	
+		<div class="data">
+
+		    <h3>predictions:</h3>
+
+			<div class="align">
+			
+
+				<div class="d">flight duration (s):</div>
+				<div id="duration"></div>
+				<div class="d">distance (m):</div>
+                <div id="dist"></div>
+
+            </div>
+
+			<h3>parameters:</h3>
+
+            <div class="align">
+
+
+				<div class="d">velocity (m/s):</div>
+				<div id="vel"></div>
+
+				<div class="d">angle (rad):</div>
+				<div id="ang"></div>
+
+				<div class="d">start height (m):</div>
+				<div id="height"></div>
+
+				<div class="d">start distance (m):</div>
+				<div id="width"></div>
+
+			</div>
+			
+
+
+        </div>
+	
+        <div>
+
+            <div class="flex">
+
+                <div class="vertical-scale" id="vertical">
+
+
+
+                </div>
+
+                <canvas id="canvas" width="1000" height="1000"></canvas>
+
+            </div>
+
+            <div class="horizontal-scale" id="horizontal">
+
+
+            </div>
+
+        </div>
+	
+	</div>
+	
+    
+
+<div class="flex under">
 
     <div>
-        <canvas id="canvas"></canvas>
-    <button id="start" onclick="manager()">start simulation</button>
+        <h3 id="all-values" >Actual Values:</h3>
+        <button onclick="toggle_table()">toggle</button>
+        <table id="table" hidden="hidden">
+            <thead>
+                <tr>
+                    <td>second</td>
+                    <td>x (m)</td>
+                    <td>y (m)</td>
+                </tr>
+            </thead>
+
+            <tbody id="tbody" >
+
+            </tbody>
+        </table>
     </div>
-    <h3>predictions:</h3>
-    <div>flight duration (s):</div>
-    <div id="duration"></div>
 
-    <div>distance (m/s):</div>
-    <div id="dist"></div>
 
-    <h3>parameters:</h3>
 
-    <div>velocity (m/s):</div>
-    <div id="vel"></div>
+    <div class="adv-toggleable">
+        <h3 id="adv-h" >Advanced settings:</h3>
+        <button onclick="toggle_adv()">toggleADv</button>
 
-    <div>angle (rad):</div>
-    <div id="ang"></div>
+        <div class="row" id="advanced-settings">
 
-    <div>start height (m):</div>
-    <div id="height"></div>
+            <input class="advSet" placeholder="line_thic" id="line_thic">
+            <input class="advSet" placeholder="scale" id="scale">
+            <input class="advSet" placeholder="delay" id="delay">
+            <input class="advSet" placeholder="draw_angle_line" id="draw_angle_line">
+            <input class="advSet" placeholder="angle_line_thicc" id="angle_line_thicc">
+            <input class="advSet" placeholder="instant_animation" id="instant_animation">
+            <input class="advSet" placeholder="instant_tick_step" id="instant_tick_step">
+            <input class="advSet" placeholder="anim_interval_frame" id="anim_interval_frame">
+            <input class="advSet" placeholder="angle_line_x" id="angle_line_x">
+            <input class="advSet" placeholder="bg_color" id="bg_color">
+            <input class="advSet" placeholder="scale_line_x" id="scale_line_x">
+            <input class="advSet" placeholder="tick_step" id="tick_step">
+            <input class="advSet" placeholder="g" id="g">
+            <input class="advSet" placeholder="precision" id="precision">
+            <input class="advSet" placeholder="grass_quality" id="grass_quality">
+            <input class="advSet" placeholder="pixels_per_mark" id="pixels_per_mark">
+            <input class="advSet" placeholder="draw_graph_as_line" id="draw_graph_as_line">
+            <input class="advSet" placeholder="draw_time_scale" id="draw_time_scale">
+            <input class="advSet" placeholder="output_table" id="output_table">
+            <input class="advSet" placeholder="auto_scale" id="auto_scale">
+            <input class="advSet" placeholder="use_rad" id="use_rad">
+            <input class="advSet" placeholder="nuke" id="nuke">
+            <input class="advSet" placeholder="clear_field_after_round" id="clear_field_after_round">
 
-    <div>start distance (m):</div>
-    <div id="width"></div>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <td>second</td>
-                <td>x (m)</td>
-                <td>y (m)</td>
-            </tr>
-        </thead>
-
-        <tbody id="tbody">
-
-        </tbody>
-    </table>
-
-    <div id="advanced-settings">
-        <input placeholder="line_thic" id="line_thic">
-        <input placeholder="scale" id="scale">
-        <input placeholder="delay" id="delay">
-        <input placeholder="bg_color" id="bg_color">
-        <input placeholder="draw_angle_line" id="draw_angle_line">
-        <input placeholder="angle_line_thicc" id="angle_line_thicc">
-        <input placeholder="angle_line_x" id="angle_line_x">
-        <input placeholder="instant_animation" id="instant_animation">
-        <input placeholder="anim_interval_frame" id="anim_interval_frame">
     </div>
+
+</div>
+
+
+
+
 
 
 
